@@ -1,20 +1,24 @@
-// Package filter provides methods for blurs and image processing.
-package filter
+package mage
 
 import (
     "image"
     "image/color"
 )
 
-func ApplyFilter(img image.Image, kernel []uint32, ksize int) image.Image {
-    b := img.Bounds()
+// ApplyFilter() is used in applying custom filters into the image.
+// The kernel should be square(3x3, 5x5) and must have odd number of element
+// on each side(3x3 is valid while 4x4 is not). This is to ensure that the
+// kernel have a center which will where the output of the kernel is applied
+// in the image.
+func (i *Image) ApplyFilter(kernel []uint32, ksize int) image.Image {
+    b := i.img.Bounds()
     border := int(ksize/2)
 
     tmp := image.NewRGBA(b)
 
     for y := b.Min.Y + border; y < b.Max.Y - border; y++ {
         for x := b.Min.X + border; x < b.Max.X - border; x++ {
-            c := convolve(get_patch(img, x, y, border), kernel)
+            c := convolve(get_patch(i.img, x, y, border), kernel)
             tmp.Set(x, y, c)
         }
     }

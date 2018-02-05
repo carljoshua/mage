@@ -1,4 +1,4 @@
-package filter
+package mage
 
 import (
     "errors"
@@ -9,34 +9,41 @@ import (
 )
 
 type Image struct {
-    image.Image
-
+    img     image.Image
 }
 
-func Open(path string) (image.Image, error) {
+// Open() opens the file specified by the path.
+// It returns an *Image if successful.
+func Open(path string) (*Image, error) {
+    if _, err := os.Stat(path); err != nil {
+        return nil, err
+    }
     reader, err := os.Open(path)
     if err != nil {
         return nil, err
     }
-    img, _, err := image.Decode(reader)
+    tmp, _, err := image.Decode(reader)
     if err != nil {
         return nil, err
     }
-    return img, nil
+    return &Image{ img: tmp }, nil
 }
 
-func Save(img image.Image, name string, ext string) error {
+// Save() create and store the *Image in a file.
+// There are only two file extension that this function accepts:
+// jpeg/jpg and png.
+func (i *Image) Save(name string, ext string) error {
     file, err := os.Create(name + "." + ext)
     if err != nil {
         return err
     }
     switch ext {
     case "jpeg", "jpg":
-        if err := jpeg.Encode(file, img, nil); err != nil {
+        if err := jpeg.Encode(file, i.img, nil); err != nil {
             return err
         }
     case "png":
-        if err := png.Encode(file, img); err != nil {
+        if err := png.Encode(file, i.img); err != nil {
             return err
         }
     default:
