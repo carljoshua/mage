@@ -3,7 +3,6 @@ package mage
 
 import (
     "image"
-    "fmt"
 )
 
 const (
@@ -62,8 +61,6 @@ func (i *Image) Resize(width, height int) *Image {
         for x := b.Min.X; x < b.Max.X; x++ {
             tmp.Set(x, y, i.img.At(int(j), int(k)))
             j += skipX
-
-            fmt.Printf("%d-%d, %f-%f\n", x, y, j, k)
         }
         k += skipY
         j = 0

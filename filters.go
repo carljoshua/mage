@@ -8,43 +8,19 @@ import (
 
 // Edges() finds and returns the edges in the image. (Improve noise reduction in this)
 func (i *Image) Edges() *Image {
-    bw_img := i.GaussianBlur().Grayscale()
+    bw_img := i.GaussianBlur(1.0).Grayscale()
     b := bw_img.img.Bounds()
-    var edgeX, edgeY [][]int
 
-    kernelX := []int{   -1, 0, 1,
-                        -2, 0, 2,
-                        -1, 0, 1 }
-    kernelY := []int{   -1,-2,-1,
-                         0, 0, 0,
-                         1, 2, 1 }
+    kernelX := []float32{-1, 0, 1,
+                         -2, 0, 2,
+                         -1, 0, 1 }
+    kernelY := []float32{-1,-2,-1,
+                          0, 0, 0,
+                          1, 2, 1 }
 
-    for y := b.Min.Y; y < b.Max.Y; y++ {
-        var tmpX, tmpY []int
-        for x := b.Min.X; x < b.Max.X; x++ {
-            tmp := make([]int, 9)
-            i := 0
-            for j := -1; j <= 1; j++ {
-                for k := -1; k <= 1; k++ {
-                    v, _, _, _ := bw_img.img.At(x+k, y+j).RGBA()
-                    tmp[i] = int(v >> 8)
-                    i++
-                }
-            }
-
-            totalX := 0
-            totalY := 0
-            for i, _ := range(tmp) {
-                totalX = totalX + (tmp[i] * kernelX[i])
-                totalY = totalY + (tmp[i] * kernelY[i])
-            }
-
-            tmpX = append(tmpX, totalX)
-            tmpY = append(tmpY, totalY)
-        }
-        edgeX = append(edgeX, tmpX)
-        edgeY = append(edgeY, tmpY)
-    }
+    var edgeX, edgeY [][]float32
+    edgeX = applyFilter(i.img, kernelX, 3)[0]
+    edgeY = applyFilter(i.img, kernelY, 3)[0]
 
     tmp := image.NewGray(b)
     for y := b.Min.Y; y < b.Max.Y; y++ {
@@ -63,17 +39,23 @@ func (i *Image) Edges() *Image {
 }
 
 // GaussianBlur() applies returns an *Image with Gaussian Blur applied to it.
-func (i *Image) GaussianBlur() *Image {
-    kernel := []uint32{ 1,2,1,
-                        2,4,2,
-                        1,2,1 }
-    return &Image{ img: i.ApplyFilter(kernel, 3) }
+func (i *Image) GaussianBlur(sigma float32) *Image {
+    kernel := []float32{ 4,3,2,3,4,
+                         3,2,1,2,3,
+                         2,1,0,1,2,
+                         3,2,1,2,3,
+                         4,3,2,3,4 }
+    // for i, x := range(kernel) {
+    //     tmp := 1/math.Sqrt(float64(2*math.Pi*(sigma*sigma)))
+    //     kernel[i] = float32(tmp * math.Exp(-float64((x*x)/2*(sigma*sigma))))
+    // }
+    return i.ApplyFilter(kernel, 5)
 }
 
 // MeanBlur() applies returns an *Image with Mean Blur applied to it.
 func (i *Image) MeanBlur() *Image {
-    kernel := []uint32{ 1,1,1,
-                        1,1,1,
-                        1,1,1 }
-    return &Image{ img: i.ApplyFilter(kernel, 3) }
+    kernel := []float32{ 1,1,1,
+                         1,1,1,
+                         1,1,1 }
+    return i.ApplyFilter(kernel, 3)
 }
